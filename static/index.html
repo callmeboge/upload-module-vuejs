@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Upload Module</title>
+        <!-- Required meta tags -->
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        />
+
+        <!-- Bootstrap CSS -->
+        <link
+            rel="stylesheet"
+            href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+            integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+            crossorigin="anonymous"
+        />
+        <style>
+            html,
+            body {
+                padding: 0;
+                margin: 0;
+            }
+
+            /* --black-coffee: #443742ff;
+            --french-bistre: #846c5bff;
+            --antique-brass: #cea07eff;
+            --banana-mania: #edd9a3ff;
+            --pale-spring-bud: #e2e8c0ff; */
+        </style>
+    </head>
+
+    <body>
+        <main id="app">
+            <div class="w-50 mx-auto mt-4">
+                <div class="jumbotron">
+                    <h1 class="display-4">Upload Image with Vue</h1>
+                </div> 
+                <div v-if="imageURL" class="jumbotron">
+                    <img :src="imageURL" :alt="imageAltName" style="width: 100%;">
+                </div>
+                <form @submit.prevent>
+                    <input
+                        class="form-control mt-4"
+                        type="file"
+                        @change="getImageInfo"
+                        ref="imageInput"
+                    />
+                    <code>{{ formStatus }}</code>
+                    <code>{{ imageInfo }}</code>
+
+                    <button
+                        class="btn btn-block btn-outline-primary mt-4"
+                        type="submit"
+                        @click="sendImage"
+                    >
+                        Submit
+                    </button>
+                </form>
+            </div>
+        </main>
+
+        <!-- Optional JavaScript -->
+        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+        <script
+            src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+            integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+            crossorigin="anonymous"
+        ></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+            integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+            crossorigin="anonymous"
+        ></script>
+        <script
+            src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"
+        ></script>
+        <script src="https://unpkg.com/vue@3.1.1"></script>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <script>
+            function imageURLFriendly (file) {
+                const regex = [/[()]/gm, /[\s]/gm]
+                const subtitute = ['', '-']
+                
+                return file.name.replace(regex[0], subtitute[0]).replace(regex[1], subtitute[1]).toLowerCase()
+            }
+
+            const app = Vue.createApp({
+                data() {
+                    return {
+                        imageInfo: {
+                            filename: "",
+                            filetype: "",
+                            filesize: "",
+                        },
+                        fileList: "",
+                        formStatus: "",
+                        imageURL: "",
+                        imageAltName: ""
+                    };
+                },
+                methods: {
+                    getImageInfo(e) {
+                        this.fileList = e.target.files;
+                        for (file of this.fileList) {
+                            this.imageInfo.filename = file.name
+                                ? file.name
+                                : "UNSUPPORTED NAME";
+                            this.imageInfo.filesize = file.size
+                                ? file.size
+                                : "UNSUPPORTED SIZE";
+                            this.imageInfo.filetype = file.type
+                                ? file.type
+                                : "UNSUPPORTED TYPE MIME";
+                        }
+                    },
+                    sendImage: async function () {
+                        const bodyFormData = new FormData();
+
+                        bodyFormData.append("image", 
+                                            this.fileList[0], imageURLFriendly(this.fileList[0])
+                                        );
+                        bodyFormData.append("name", "Laboge");
+
+                        try {
+                            const { data } = await axios.post(
+                                "/upload",
+                                bodyFormData,
+                                {
+                                    headers: {
+                                        "Content-Type": "multipart/form-data",
+                                    },
+                                }
+                            );
+                            
+                            this.imageURL = `uploads/assets/images/${data.imageInfo.filename}`
+                            this.imageAltName = data.imageInfo.filename
+
+                        } catch (err) {
+                            console.log(err.response);
+                        }
+                    },
+                },
+            });
+
+            // mount
+            app.mount("#app");
+        </script>
+    </body>
+</html>
